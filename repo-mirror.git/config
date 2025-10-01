@@ -1,0 +1,9 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = true
+	ignorecase = true
+[remote "origin"]
+	url = F:/PROJETO/Sistema Organizacional Logistica/.
+	fetch = +refs/*:refs/*
+	mirror = true
