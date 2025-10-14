@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# Ambiente
+.env
+
+# Firebase Admin SDK private key
+backend/sistema-logistica-d0eed-firebase-adminsdk-fbsvc-5e4ce95a46.json
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/

@@ -1,133 +1,54 @@
 console.log("Rodando arquivo:", __filename);
 
 require("dotenv").config();
-const path = require("path");
-const fs = require("fs");
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const admin = require("firebase-admin");
+const path = require("path");
+const fs = require("fs");
 
-// --- Inicializar Firebase Admin ---
+const app = express();
+
+// Inicializar Firebase Admin
 const credentialsPath = process.env.FIREBASE_CREDENTIALS_PATH;
-const credentialsJson = process.env.FIREBASE_CREDENTIALS;
-
-if (credentialsJson) {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(credentialsJson)),
-  });
-  console.log("Firebase Admin inicializado via JSON da variável de ambiente.");
-} else if (credentialsPath) {
-  const fullPath = path.resolve(__dirname, credentialsPath);
-  if (fs.existsSync(fullPath)) {
-    const serviceAccount = require(fullPath);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    console.log("Firebase Admin inicializado via arquivo:", fullPath);
-  } else {
-    console.error("Arquivo de credencial não encontrado em:", fullPath);
-    process.exit(1);
-  }
-} else {
-  console.error("Nenhuma credencial do Firebase Admin encontrada.");
+if (!credentialsPath || !fs.existsSync(path.resolve(__dirname, credentialsPath))) {
+  console.error("Arquivo de credencial do Firebase não encontrado!");
   process.exit(1);
 }
-
+const serviceAccount = require(path.resolve(__dirname, credentialsPath));
+admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 const db = admin.firestore();
+console.log("Firebase Admin inicializado.");
 
-// --- Configurar Express ---
-const app = express();
-const PORT = process.env.PORT || 4000;
+// Middlewares globais
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-// --- Middleware: verificar token Firebase ---
-async function verifyToken(req, res, next) {
-  const authHeader = req.headers.authorization || "";
-  const match = authHeader.match(/^Bearer (.*)$/);
-  if (!match) return res.status(401).json({ error: "Token não fornecido" });
+// Middlewares separados
+const verifyTokenMiddleware = require("./middlewares/verifyToken");
+const onlyGerente = require("./middlewares/onlyGerente");
+const gerenteOuConferente = require("./middlewares/gerenteOuConferente");
 
-  try {
-    const decoded = await admin.auth().verifyIdToken(match[1]);
-    req.user = { uid: decoded.uid, email: decoded.email };
-    const snap = await db.collection("usuarios").doc(decoded.uid).get();
-    req.profile = snap.exists ? snap.data() : null;
-    next();
-  } catch (err) {
-    console.error("verifyToken error:", err);
-    return res.status(401).json({ error: "Token inválido" });
-  }
-}
+// Wrapper para passar o db ao middleware verifyToken
+const verify = (req, res, next) => verifyTokenMiddleware(db, req, res, next);
 
-// --- Helpers de autorização ---
-function onlyGerente(req, res, next) {
-  if (req.profile?.perfil === "gerente") return next();
-  return res.status(403).json({ error: "Acesso negado. Requer perfil gerente." });
-}
-
-function gerenteOuConferente(req, res, next) {
-  if (["gerente", "conferente"].includes(req.profile?.perfil)) return next();
-  return res.status(403).json({ error: "Acesso negado. Requer gerente ou conferente." });
-}
-
-// --- Rotas básicas ---
+// Teste inicial da API
 app.get("/", (req, res) => res.json({ ok: true, msg: "API Logística Node + Firebase Admin funcionando" }));
 
-// --- Rotas de pedidos ---
-app.get("/api/pedidos", verifyToken, async (req, res) => {
-  const snap = await db.collection("pedidos").get();
-  const pedidos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  res.json(pedidos);
+// Rotas
+app.use("/api/pedidos", verify, require("./routes/pedidos")(db));
+app.use("/api/pallets", verify, require("./routes/pallets")(db));
+app.use("/api/rotas", verify, require("./routes/rotas")(db));
+app.use("/api/usuarios", verify, require("./routes/usuarios")(db));
+
+// Middleware global de tratamento de erros
+app.use((err, req, res, next) => {
+  console.error("Erro não tratado:", err);
+  res.status(500).json({ error: "Erro interno do servidor" });
 });
 
-app.post("/api/pedidos", verifyToken, onlyGerente, async (req, res) => {
-  const data = { ...req.body, criadoPor: req.user.uid, criadoEm: admin.firestore.FieldValue.serverTimestamp() };
-  const ref = await db.collection("pedidos").add(data);
-  const snap = await ref.get();
-  res.status(201).json({ id: ref.id, ...snap.data() });
-});
-
-// --- Rotas de pallets ---
-app.get("/api/pedidos/:id/pallets", verifyToken, gerenteOuConferente, async (req, res) => {
-  const snap = await db.collection("pedidos").doc(req.params.id).collection("pallets").get();
-  const pallets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  res.json(pallets);
-});
-
-app.post("/api/pedidos/:id/pallets", verifyToken, gerenteOuConferente, async (req, res) => {
-  const colRef = db.collection("pedidos").doc(req.params.id).collection("pallets");
-  const data = { ...req.body, criadoPor: req.user.uid, criadoEm: admin.firestore.FieldValue.serverTimestamp() };
-  const ref = await colRef.add(data);
-  const snap = await ref.get();
-  res.status(201).json({ id: ref.id, ...snap.data() });
-});
-
-// --- Rotas de rotas ---
-app.get("/api/rotas", verifyToken, async (req, res) => {
-  const snap = await db.collection("rotas").get();
-  const rotas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  res.json(rotas);
-});
-
-app.post("/api/rotas", verifyToken, onlyGerente, async (req, res) => {
-  const data = { ...req.body, criadoPor: req.user.uid, criadoEm: admin.firestore.FieldValue.serverTimestamp() };
-  const ref = await db.collection("rotas").add(data);
-  const snap = await ref.get();
-  res.status(201).json({ id: ref.id, ...snap.data() });
-});
-
-// --- Rotas de usuários ---
-app.post("/api/usuarios/:uid", verifyToken, onlyGerente, async (req, res) => {
-  await db.collection("usuarios").doc(req.params.uid).set(req.body, { merge: true });
-  const snap = await db.collection("usuarios").doc(req.params.uid).get();
-  res.json({ id: req.params.uid, ...snap.data() });
-});
-
-app.get("/api/me", verifyToken, (req, res) => {
-  res.json({ user: req.user, profile: req.profile });
-});
-
-// --- Start server ---
+// Iniciar servidor
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server rodando na porta ${PORT}`));
