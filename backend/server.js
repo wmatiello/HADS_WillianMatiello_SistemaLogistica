@@ -34,14 +34,14 @@ const gerenteOuConferente = require("./middlewares/gerenteOuConferente");
 // Wrapper para passar o db ao middleware verifyToken
 const verify = (req, res, next) => verifyTokenMiddleware(db, req, res, next);
 
-// Teste inicial da API
+// Rotas públicas (se houver alguma)
 app.get("/", (req, res) => res.json({ ok: true, msg: "API Logística Node + Firebase Admin funcionando" }));
 
-// Rotas
-app.use("/api/pedidos", verify, require("./routes/pedidos")(db));
-app.use("/api/pallets", verify, require("./routes/pallets")(db));
-app.use("/api/rotas", verify, require("./routes/rotas")(db));
-app.use("/api/usuarios", verify, require("./routes/usuarios")(db));
+// Rotas protegidas
+app.use("/api/pedidos", verify, require("./routes/pedidos")(db, onlyGerente, gerenteOuConferente));
+app.use("/api/pallets", verify, require("./routes/pallets")(db, onlyGerente, gerenteOuConferente));
+app.use("/api/rotas", verify, require("./routes/rotas")(db, onlyGerente));
+app.use("/api/usuarios", verify, require("./routes/usuarios")(db, onlyGerente));
 
 // Middleware global de tratamento de erros
 app.use((err, req, res, next) => {
@@ -52,3 +52,6 @@ app.use((err, req, res, next) => {
 // Iniciar servidor
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server rodando na porta ${PORT}`));
+
+// Exporta db caso precise em outros módulos
+module.exports = { app, db };
