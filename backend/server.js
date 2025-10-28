@@ -34,14 +34,22 @@ const gerenteOuConferente = require("./middlewares/gerenteOuConferente");
 // Wrapper para passar o db ao middleware verifyToken
 const verify = (req, res, next) => verifyTokenMiddleware(db, req, res, next);
 
-// Rotas públicas (se houver alguma)
+// Rotas públicas
 app.get("/", (req, res) => res.json({ ok: true, msg: "API Logística Node + Firebase Admin funcionando" }));
 
-// Rotas protegidas
-app.use("/api/pedidos", verify, require("./routes/pedidos")(db, onlyGerente, gerenteOuConferente));
-app.use("/api/pallets", verify, require("./routes/pallets")(db, onlyGerente, gerenteOuConferente));
-app.use("/api/rotas", verify, require("./routes/rotas")(db, onlyGerente));
-app.use("/api/usuarios", verify, require("./routes/usuarios")(db, onlyGerente));
+// Rotas protegidas (login obrigatório)
+const rotasProtegidas = [
+  { path: "/api/pedidos", file: "./routes/pedidos", middlewares: [verify] },
+  { path: "/api/pallets", file: "./routes/pallets", middlewares: [verify] },
+  { path: "/api/rotas", file: "./routes/rotas", middlewares: [verify] },
+  { path: "/api/usuarios", file: "./routes/usuarios", middlewares: [verify] },
+];
+
+// Importa e usa todas as rotas automaticamente
+rotasProtegidas.forEach(({ path, file, middlewares }) => {
+  const rota = require(file)(db, onlyGerente, gerenteOuConferente);
+  app.use(path, ...middlewares, rota);
+});
 
 // Middleware global de tratamento de erros
 app.use((err, req, res, next) => {

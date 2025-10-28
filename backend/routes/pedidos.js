@@ -18,7 +18,7 @@ module.exports = (db) => {
   // Criar pedido
   router.post("/", async (req, res) => {
     try {
-      const data = { ...req.body, criadoPor: req.user.uid, criadoEm: criadoEm() };
+      const data = { ...req.body, criadoPor: req.user.uid, criadoEm: criadoEm(), atualizadoEm: criadoEm() };
       const ref = await db.collection("pedidos").add(data);
       const snap = await ref.get();
       res.status(201).json({ id: ref.id, ...snap.data() });

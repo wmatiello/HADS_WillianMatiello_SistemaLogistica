@@ -18,11 +18,10 @@ module.exports = (db) => {
   // Criar rota
   router.post("/", async (req, res) => {
     try {
-      const { nome, cidade, pedidos } = req.body;
-      if (!nome || !cidade) {
-        return res.status(400).json({ error: "Campos obrigatórios ausentes" });
-      }
-      const data = { ...req.body, criadoPor: req.user.uid, criadoEm: criadoEm() };
+      const { nome, cidade } = req.body;
+      if (!nome || !cidade) return res.status(400).json({ error: "Campos obrigatórios ausentes" });
+
+      const data = { ...req.body, criadoPor: req.user.uid, criadoEm: criadoEm(), atualizadoEm: criadoEm() };
       const ref = await db.collection("rotas").add(data);
       const snap = await ref.get();
       res.status(201).json({ id: ref.id, ...snap.data() });
