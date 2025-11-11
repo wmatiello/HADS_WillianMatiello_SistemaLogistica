@@ -1,55 +1,104 @@
-// src/App.jsx
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "./firebase";
+import { UserProvider } from "./context/UserContext";
+
+
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
-import "./App.css";
-import { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase";
+import Pedidos from "./pages/Pedidos";
+import Rotas from "./pages/Rotas";
+import Pallets from "./pages/Pallets";
+import Usuarios from "./pages/Usuarios";
+import Sidebar from "./components/Sidebar";
+import RequirePerfil from "./components/RequirePerfil";
 
-function App() {
-  const [usuario, setUsuario] = useState(null);
-  const [carregando, setCarregando] = useState(true);
+// Layout protegido com sidebar
+function ProtectedLayout() {
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar />
+      <main className="flex-1 p-6 overflow-auto">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUsuario(user);
-      setCarregando(false);
-    });
-    return () => unsubscribe();
-  }, []);
+function AppRoutes() {
+  const [user, loading] = useAuthState(auth);
 
-  if (carregando) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg font-semibold">Carregando...</p>
+      <div className="flex justify-center items-center h-screen text-lg font-semibold">
+        Carregando...
       </div>
     );
   }
 
   return (
-    <Router>
-      <Routes>
-        {/* Rota de login */}
+    <Routes>
+      {/* Login */}
+      <Route
+        path="/login"
+        element={!user ? <LoginPage /> : <Navigate to="/" replace />}
+      />
+
+      {/* Layout protegido se logado */}
+      <Route element={user ? <ProtectedLayout /> : <Navigate to="/login" replace />}>
+        
+        <Route path="/" element={<Dashboard />} />
+
         <Route
-          path="/"
-          element={usuario ? <Navigate to="/dashboard" /> : <LoginPage />}
+          path="/usuarios"
+          element={
+            <RequirePerfil allow="gerente">
+              <Usuarios />
+            </RequirePerfil>
+          }
         />
 
-        {/* Rota do dashboard */}
         <Route
-          path="/dashboard"
-          element={usuario ? <Dashboard /> : <Navigate to="/" />}
+          path="/pedidos"
+          element={
+            <RequirePerfil allow="gerente">
+              <Pedidos />
+            </RequirePerfil>
+          }
         />
 
-        {/* Redirecionamento de qualquer rota desconhecida */}
         <Route
-          path="*"
-          element={<Navigate to={usuario ? "/dashboard" : "/"} />}
+          path="/pallets"
+          element={
+            <RequirePerfil allow={["gerente", "conferente"]}>
+              <Pallets />
+            </RequirePerfil>
+          }
         />
-      </Routes>
-    </Router>
+
+        <Route
+          path="/rotas"
+          element={
+            <RequirePerfil allow={["gerente", "conferente"]}>
+              <Rotas />
+            </RequirePerfil>
+          }
+        />
+
+      </Route>
+
+      {/* Rota fallback */}
+      <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
+    </Routes>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <UserProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </UserProvider>
+  );
+}
