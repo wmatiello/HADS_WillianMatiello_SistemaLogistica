@@ -28,7 +28,7 @@ app.use(morgan("dev"));
 
 // Middlewares separados
 const verifyTokenMiddleware = require("./middlewares/verifyToken");
-const onlyGerente = require("./middlewares/onlyGerente");
+const OnlyGerente = require("./middlewares/onlyGerente");
 const gerenteOuConferente = require("./middlewares/gerenteOuConferente");
 
 // Wrapper para passar o db ao middleware verifyToken
