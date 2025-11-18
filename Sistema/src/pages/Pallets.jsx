@@ -1,0 +1,150 @@
+// src/pages/Pallets.jsx
+import { useState, useEffect } from "react";
+import { usePallets } from "../hooks/usePallets";
+import { usePedidos } from "../hooks/usePedidos";
+import { useUser } from "../context/UserContext";
+
+export default function Pallets() {
+  const { pallets, criarPallet, deletarPallet, loading } = usePallets();
+  const { pedidos } = usePedidos();
+  const { perfil } = useUser();
+  
+  const [form, setForm] = useState({
+    pedidoId: "", codigo: "", quantidade: "", peso: "", tipoEmbalagem: "caixa"
+  });
+  const [mostrarForm, setMostrarForm] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await criarPallet(form);
+      setForm({ pedidoId: "", codigo: "", quantidade: "", peso: "", tipoEmbalagem: "caixa" });
+      setMostrarForm(false);
+      alert("Pallet registrado com sucesso!");
+    } catch (error) {
+      alert("Erro ao registrar pallet: " + error.message);
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Controle de Pallets</h2>
+        <button
+          onClick={() => setMostrarForm(!mostrarForm)}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          {mostrarForm ? "Cancelar" : "Novo Pallet"}
+        </button>
+      </div>
+
+      {/* Formulário */}
+      {mostrarForm && (
+        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow mb-6">
+          <h3 className="text-lg font-semibold mb-4">Registrar Pallet</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <select
+              value={form.pedidoId}
+              onChange={(e) => setForm({...form, pedidoId: e.target.value})}
+              className="border rounded px-3 py-2"
+              required
+            >
+              <option value="">Selecione um pedido</option>
+              {pedidos.map(pedido => (
+                <option key={pedido.id} value={pedido.id}>
+                  {pedido.cliente} - {pedido.produto} (Qtd: {pedido.quantidade})
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="text"
+              placeholder="Código do Pallet"
+              value={form.codigo}
+              onChange={(e) => setForm({...form, codigo: e.target.value})}
+              className="border rounded px-3 py-2"
+              required
+            />
+
+            <input
+              type="number"
+              placeholder="Quantidade Real"
+              value={form.quantidade}
+              onChange={(e) => setForm({...form, quantidade: e.target.value})}
+              className="border rounded px-3 py-2"
+              required
+            />
+
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Peso (kg)"
+              value={form.peso}
+              onChange={(e) => setForm({...form, peso: e.target.value})}
+              className="border rounded px-3 py-2"
+              required
+            />
+
+            <select
+              value={form.tipoEmbalagem}
+              onChange={(e) => setForm({...form, tipoEmbalagem: e.target.value})}
+              className="border rounded px-3 py-2"
+            >
+              <option value="caixa">Caixa</option>
+              <option value="saco">Saco</option>
+              <option value="unidade">Unidade</option>
+              <option value="pallet">Pallet</option>
+            </select>
+          </div>
+          
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="bg-blue-600 text-white px-6 py-2 rounded mt-4 hover:bg-blue-700"
+          >
+            {loading ? "Registrando..." : "Registrar Pallet"}
+          </button>
+        </form>
+      )}
+
+      {/* Lista de Pallets */}
+      <div className="bg-white rounded-lg shadow">
+        <h3 className="text-lg font-semibold p-4 border-b">Pallets Registrados</h3>
+        <div className="p-4">
+          {pallets.length === 0 ? (
+            <p className="text-gray-500">Nenhum pallet registrado</p>
+          ) : (
+            <div className="space-y-4">
+              {pallets.map(pallet => (
+                <div key={pallet.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold">Código: {pallet.codigo}</h4>
+                      <p className="text-sm text-gray-600">Pedido: {pallet.pedidoId}</p>
+                      <p className="text-sm">Quantidade: {pallet.quantidade}</p>
+                      <p className="text-sm">Peso: {pallet.peso} kg</p>
+                      <p className="text-sm">Tipo: {pallet.tipoEmbalagem}</p>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        pallet.divergencia > 0 ? 'bg-green-100 text-green-800' :
+                        pallet.divergencia < 0 ? 'bg-red-100 text-red-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        Divergência: {pallet.divergencia}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => deletarPallet(pallet.id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

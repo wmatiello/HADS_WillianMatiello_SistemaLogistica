@@ -3,7 +3,6 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebase";
 import { UserProvider } from "./context/UserContext";
 
-
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
 import Pedidos from "./pages/Pedidos";
@@ -13,7 +12,7 @@ import Usuarios from "./pages/Usuarios";
 import Sidebar from "./components/Sidebar";
 import RequirePerfil from "./components/RequirePerfil";
 
-// Layout protegido com sidebar
+// Layout principal com Sidebar e Outlet (onde as páginas são renderizadas)
 function ProtectedLayout() {
   return (
     <div className="flex h-screen bg-gray-100">
@@ -25,9 +24,11 @@ function ProtectedLayout() {
   );
 }
 
+// Controla todas as rotas do app
 function AppRoutes() {
   const [user, loading] = useAuthState(auth);
 
+  // Enquanto o Firebase verifica o login
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen text-lg font-semibold">
@@ -44,29 +45,34 @@ function AppRoutes() {
         element={!user ? <LoginPage /> : <Navigate to="/" replace />}
       />
 
-      {/* Layout protegido se logado */}
-      <Route element={user ? <ProtectedLayout /> : <Navigate to="/login" replace />}>
-        
+      {/* Layout protegido (só entra se estiver logado) */}
+      <Route
+        element={user ? <ProtectedLayout /> : <Navigate to="/login" replace />}
+      >
+        {/* Dashboard */}
         <Route path="/" element={<Dashboard />} />
 
+        {/* Usuários - somente gerente */}
         <Route
           path="/usuarios"
           element={
-            <RequirePerfil allow="gerente">
+            <RequirePerfil allow={["gerente"]}>
               <Usuarios />
             </RequirePerfil>
           }
         />
 
+        {/* Pedidos - somente gerente */}
         <Route
           path="/pedidos"
           element={
-            <RequirePerfil allow="gerente">
+            <RequirePerfil allow={["gerente"]}>
               <Pedidos />
             </RequirePerfil>
           }
         />
 
+        {/* Pallets - gerente e conferente */}
         <Route
           path="/pallets"
           element={
@@ -76,6 +82,7 @@ function AppRoutes() {
           }
         />
 
+        {/* Rotas - gerente e conferente */}
         <Route
           path="/rotas"
           element={
@@ -84,15 +91,15 @@ function AppRoutes() {
             </RequirePerfil>
           }
         />
-
       </Route>
 
-      {/* Rota fallback */}
+      {/* Caso não encontre a rota */}
       <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
     </Routes>
   );
 }
 
+// App principal com contexto do usuário
 export default function App() {
   return (
     <UserProvider>
