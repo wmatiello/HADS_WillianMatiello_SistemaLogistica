@@ -1,14 +1,12 @@
-// src/pages/Rotas.jsx
-import { useState, useEffect } from "react";
+// src/pages/Rotas.jsx - VERSÃO ATUALIZADA
+import { useState } from "react";
 import { useRotas } from "../hooks/useRotas";
 import { usePedidos } from "../hooks/usePedidos";
-import { usePallets } from "../hooks/usePallets";
 import { useUser } from "../context/UserContext";
 
 export default function Rotas() {
   const { rotas, criarRota, adicionarPedidoARota, removerPedidoDaRota, deletarRota, loading } = useRotas();
-  const { pedidos } = usePedidos();
-  const { pallets } = usePallets();
+  const { pedidos, atualizarStatusPedido } = usePedidos();
   const { perfil } = useUser();
   
   const [formRota, setFormRota] = useState({
@@ -18,15 +16,11 @@ export default function Rotas() {
   const [rotaSelecionada, setRotaSelecionada] = useState(null);
   const [pedidoParaAdicionar, setPedidoParaAdicionar] = useState("");
 
-  // Filtrar pedidos que têm pallets (prontos para rota)
+  // ✅ FILTRAR APENAS PEDIDOS PRONTOS (totalProduzido >= quantidade)
   const pedidosProntos = pedidos.filter(pedido => {
-    const palletsDoPedido = pallets.filter(p => p.pedidoId === pedido.id);
-    return palletsDoPedido.length > 0; // Tem pelo menos 1 pallet
-  });
-
-  // Pedidos que ainda não estão em nenhuma rota
-  const pedidosDisponiveis = pedidosProntos.filter(pedido => {
-    return !rotas.some(rota => rota.pedidos?.includes(pedido.id));
+    const produzido = pedido.totalProduzido || 0;
+    const planejado = parseInt(pedido.quantidade);
+    return produzido >= planejado && pedido.status !== "em_transporte";
   });
 
   const handleCriarRota = async (e) => {
@@ -52,25 +46,6 @@ export default function Rotas() {
       alert("Erro ao adicionar pedido: " + error.message);
     }
   };
-
-  const handleRemoverPedido = async (rotaId, pedidoId) => {
-    try {
-      await removerPedidoDaRota(rotaId, pedidoId);
-      alert("Pedido removido da rota!");
-    } catch (error) {
-      alert("Erro ao remover pedido: " + error.message);
-    }
-  };
-
-  if (perfil !== "gerente") {
-    return (
-      <div className="p-6">
-        <h2 className="text-xl font-semibold text-red-600">
-          Acesso restrito - apenas gerentes
-        </h2>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6">
@@ -147,7 +122,11 @@ export default function Rotas() {
                   {rotaSelecionada === rota.id ? "Fechar" : "Gerenciar"}
                 </button>
                 <button
-                  onClick={() => deletarRota(rota.id)}
+                  onClick={() => {
+                    if (window.confirm("Tem certeza que deseja excluir esta rota?")) {
+                      deletarRota(rota.id);
+                    }
+                  }}
                   className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
                 >
                   Excluir
@@ -160,7 +139,7 @@ export default function Rotas() {
               <div className="p-4">
                 {/* Adicionar Pedido à Rota */}
                 <div className="mb-4 p-3 bg-gray-50 rounded">
-                  <h4 className="font-semibold mb-2">Adicionar Pedido à Rota</h4>
+                  <h4 className="font-semibold mb-2">Adicionar Pedido Pronto à Rota</h4>
                   <div className="flex gap-2">
                     <select
                       value={pedidoParaAdicionar}
@@ -168,9 +147,10 @@ export default function Rotas() {
                       className="flex-1 border rounded px-3 py-2"
                     >
                       <option value="">Selecione um pedido pronto</option>
-                      {pedidosDisponiveis.map(pedido => (
+                      {pedidosProntos.map(pedido => (
                         <option key={pedido.id} value={pedido.id}>
-                          {pedido.cliente} - {pedido.produto} ({pedido.cidade})
+                          {pedido.cliente} - {pedido.produto} 
+                          (Produzido: {pedido.totalProduzido || 0}/{pedido.quantidade})
                         </option>
                       ))}
                     </select>
@@ -199,10 +179,13 @@ export default function Rotas() {
                           <div key={pedidoId} className="flex justify-between items-center p-2 border rounded">
                             <div>
                               <p className="font-medium">{pedido.cliente} - {pedido.produto}</p>
-                              <p className="text-sm text-gray-600">Cidade: {pedido.cidade} | Qtd: {pedido.quantidade}</p>
+                              <p className="text-sm text-gray-600">
+                                Produzido: {pedido.totalProduzido || 0}/{pedido.quantidade} | 
+                                Cidade: {pedido.cidade}
+                              </p>
                             </div>
                             <button
-                              onClick={() => handleRemoverPedido(rota.id, pedidoId)}
+                              onClick={() => removerPedidoDaRota(rota.id, pedidoId)}
                               className="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
                             >
                               Remover

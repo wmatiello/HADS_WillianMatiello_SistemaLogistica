@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   collection, addDoc, updateDoc, deleteDoc, doc, 
   onSnapshot, query, orderBy, serverTimestamp,
-  arrayUnion, arrayRemove, writeBatch
+  arrayUnion, arrayRemove
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
 
@@ -11,7 +11,6 @@ export const useRotas = () => {
   const [rotas, setRotas] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Escutar rotas em tempo real
   useEffect(() => {
     const q = query(collection(db, "rotas"), orderBy("criadoEm", "desc"));
     
@@ -31,8 +30,8 @@ export const useRotas = () => {
     try {
       const rotaCompleta = {
         ...dadosRota,
-        pedidos: [], // Array de IDs dos pedidos
-        status: "planejada",
+        pedidos: [], // Array de IDs dos pedidos prontos
+        status: "planejada", // planejada, em_transporte, concluida
         criadoPor: auth.currentUser.uid,
         criadoEm: serverTimestamp(),
         atualizadoEm: serverTimestamp()
@@ -48,10 +47,17 @@ export const useRotas = () => {
     }
   };
 
+  // ✅ ADICIONAR PEDIDO PRONTO À ROTA
   const adicionarPedidoARota = async (rotaId, pedidoId) => {
     try {
       await updateDoc(doc(db, "rotas", rotaId), {
         pedidos: arrayUnion(pedidoId),
+        atualizadoEm: serverTimestamp()
+      });
+
+      // ✅ MARCAR PEDIDO COMO "em_transporte"
+      await updateDoc(doc(db, "pedidos", pedidoId), {
+        status: "em_transporte",
         atualizadoEm: serverTimestamp()
       });
     } catch (error) {
@@ -72,18 +78,6 @@ export const useRotas = () => {
     }
   };
 
-  const atualizarStatusRota = async (rotaId, novoStatus) => {
-    try {
-      await updateDoc(doc(db, "rotas", rotaId), {
-        status: novoStatus,
-        atualizadoEm: serverTimestamp()
-      });
-    } catch (error) {
-      console.error("Erro ao atualizar status da rota:", error);
-      throw error;
-    }
-  };
-
   const deletarRota = async (rotaId) => {
     try {
       await deleteDoc(doc(db, "rotas", rotaId));
@@ -98,7 +92,6 @@ export const useRotas = () => {
     criarRota, 
     adicionarPedidoARota,
     removerPedidoDaRota,
-    atualizarStatusRota,
     deletarRota,
     loading 
   };
