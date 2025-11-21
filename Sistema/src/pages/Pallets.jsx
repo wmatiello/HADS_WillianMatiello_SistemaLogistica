@@ -1,5 +1,5 @@
 // src/pages/Pallets.jsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePallets } from "../hooks/usePallets";
 import { usePedidos } from "../hooks/usePedidos";
 import { useUser } from "../context/UserContext";
@@ -10,7 +10,11 @@ export default function Pallets() {
   const { perfil } = useUser();
   
   const [form, setForm] = useState({
-    pedidoId: "", codigo: "", quantidade: "", peso: "", tipoEmbalagem: "caixa"
+    pedidoId: "", 
+    codigo: "", 
+    quantidade: "", 
+    peso: "", 
+    tipoEmbalagem: "caixa"
   });
   const [mostrarForm, setMostrarForm] = useState(false);
 
@@ -18,7 +22,13 @@ export default function Pallets() {
     e.preventDefault();
     try {
       await criarPallet(form);
-      setForm({ pedidoId: "", codigo: "", quantidade: "", peso: "", tipoEmbalagem: "caixa" });
+      setForm({ 
+        pedidoId: "", 
+        codigo: "", 
+        quantidade: "", 
+        peso: "", 
+        tipoEmbalagem: "caixa" 
+      });
       setMostrarForm(false);
       alert("Pallet registrado com sucesso!");
     } catch (error) {
@@ -52,7 +62,8 @@ export default function Pallets() {
               <option value="">Selecione um pedido</option>
               {pedidos.map(pedido => (
                 <option key={pedido.id} value={pedido.id}>
-                  {pedido.cliente} - {pedido.produto} (Qtd: {pedido.quantidade})
+                  {pedido.cliente} - {pedido.produto} 
+                  ({pedido.totalProduzido || 0}/{pedido.quantidade} {pedido.unidade})
                 </option>
               ))}
             </select>
@@ -115,32 +126,45 @@ export default function Pallets() {
             <p className="text-gray-500">Nenhum pallet registrado</p>
           ) : (
             <div className="space-y-4">
-              {pallets.map(pallet => (
-                <div key={pallet.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold">Código: {pallet.codigo}</h4>
-                      <p className="text-sm text-gray-600">Pedido: {pallet.pedidoId}</p>
-                      <p className="text-sm">Quantidade: {pallet.quantidade}</p>
-                      <p className="text-sm">Peso: {pallet.peso} kg</p>
-                      <p className="text-sm">Tipo: {pallet.tipoEmbalagem}</p>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        pallet.divergencia > 0 ? 'bg-green-100 text-green-800' :
-                        pallet.divergencia < 0 ? 'bg-red-100 text-red-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        Divergência: {pallet.divergencia}
-                      </span>
+              {pallets.map(pallet => {
+                const pedido = pedidos.find(p => p.id === pallet.pedidoId);
+                return (
+                  <div key={pallet.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-semibold">Código: {pallet.codigo}</h4>
+                        <p className="text-sm text-gray-600">
+                          Pedido: {pedido?.cliente} - {pedido?.produto}
+                        </p>
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                          <div>
+                            <p className="text-sm">Quantidade: {pallet.quantidade}</p>
+                            <p className="text-sm">Peso: {pallet.peso} kg</p>
+                            <p className="text-sm">Tipo: {pallet.tipoEmbalagem}</p>
+                          </div>
+                          <div>
+                            {pedido && (
+                              <p className="text-sm text-gray-600">
+                                Progresso: {pedido.totalProduzido || 0}/{pedido.quantidade} {pedido.unidade}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (window.confirm("Tem certeza que deseja excluir este pallet?")) {
+                            deletarPallet(pallet.id);
+                          }
+                        }}
+                        className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 ml-4"
+                      >
+                        Excluir
+                      </button>
                     </div>
-                    <button
-                      onClick={() => deletarPallet(pallet.id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
-                    >
-                      Excluir
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

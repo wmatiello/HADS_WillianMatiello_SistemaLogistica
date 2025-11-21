@@ -12,8 +12,7 @@ export default function Sidebar() {
     { to: "/", label: "Dashboard", icon: <Menu size={20} /> }, // corrigido
     { to: "/pedidos", label: "Pedidos", icon: <Package size={20} /> },
     { to: "/rotas", label: "Rotas", icon: <Truck size={20} /> },
-    { to: "/pallets", label: "Pallets", icon: <Box size={20} /> }, // corrigido
-    { to: "/usuarios", label: "Usuários", icon: <Users size={20} />, roles: ["gerente"] },
+    { to: "/usuarios", label: "Usuários", icon: <Users size={20} /> },
   ];
 
   const visibleLinks = links.filter(

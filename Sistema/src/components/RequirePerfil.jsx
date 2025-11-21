@@ -1,4 +1,4 @@
-// src/components/RequirePerfil.jsx
+// src/components/RequirePerfil.jsx - VERSÃO ORIGINAL
 import { Navigate, Outlet } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 
@@ -13,9 +13,10 @@ export default function RequirePerfil({ allow }) {
     );
   }
 
+  // ✅ AGORA DEVE FUNCIONAR - seu usuário tem perfil "gerente"
   if (!allow.includes(perfil)) {
     return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
-}
+} 
