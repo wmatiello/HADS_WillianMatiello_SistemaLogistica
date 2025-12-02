@@ -1,4 +1,4 @@
-// src/hooks/useUsuarios.js - APENAS JAVASCRIPT, SEM JSX!
+// src/hooks/useUsuarios.js - VERSÃO CORRIGIDA
 import { useState, useEffect } from "react";
 import { 
   collection, doc, setDoc, updateDoc, getDocs, 
@@ -50,7 +50,9 @@ export const useUsuarios = () => {
         perfil: dadosUsuario.perfil,
         criadoPor: auth.currentUser.uid,
         criadoEm: serverTimestamp(),
-        ativo: true
+        ativo: true, // 🔥 NOVO: Já cria como ativo
+        desativadoEm: null, // 🔥 NOVO
+        motivoDesativacao: null // 🔥 NOVO
       });
 
       return {
@@ -73,26 +75,64 @@ export const useUsuarios = () => {
     }
   };
 
+  // 🔥 CORRIGIDA: Função para ativar/desativar usuário
   const atualizarUsuario = async (usuarioId, dados) => {
+    setLoading(true);
     try {
       if (perfil !== "gerente") {
         throw new Error("Apenas gerentes podem atualizar usuários");
       }
 
-      await updateDoc(doc(db, "usuarios", usuarioId), {
+      // 🔥 Verificar se não está tentando desativar a si mesmo
+      if (usuarioId === auth.currentUser?.uid && dados.ativo === false) {
+        throw new Error("Você não pode desativar sua própria conta");
+      }
+
+      // 🔥 Preparar dados de atualização
+      const updateData = {
         ...dados,
         atualizadoEm: serverTimestamp()
-      });
+      };
+
+      // 🔥 Se estiver desativando, adicionar informações extras
+      if (dados.ativo === false) {
+        updateData.desativadoEm = serverTimestamp();
+        updateData.motivoDesativacao = "Desativado pelo administrador";
+        updateData.desativadoPor = auth.currentUser?.uid;
+      }
+      
+      // 🔥 Se estiver ativando, limpar informações de desativação
+      if (dados.ativo === true) {
+        updateData.desativadoEm = null;
+        updateData.motivoDesativacao = null;
+        updateData.reativadoEm = serverTimestamp();
+        updateData.reativadoPor = auth.currentUser?.uid;
+      }
+
+      console.log("📝 Atualizando usuário:", usuarioId, updateData);
+
+      // 🔥 Fazer a atualização
+      await updateDoc(doc(db, "usuarios", usuarioId), updateData);
+
+      return { success: true, message: "Usuário atualizado com sucesso!" };
     } catch (error) {
-      console.error("Erro ao atualizar usuário:", error);
-      throw error;
+      console.error("❌ Erro ao atualizar usuário:", error);
+      throw new Error("Erro ao atualizar usuário: " + error.message);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // 🔥 NOVA: Função específica para ativar/desativar
+  const toggleAtivoUsuario = async (usuarioId, ativoAtual) => {
+    return await atualizarUsuario(usuarioId, { ativo: !ativoAtual });
   };
 
   return { 
     usuarios, 
     criarUsuario, 
     atualizarUsuario,
+    toggleAtivoUsuario, // 🔥 NOVA função
     loading 
   };
 };
