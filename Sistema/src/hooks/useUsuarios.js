@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // src/hooks/useUsuarios.js - VERSÃO CORRIGIDA
+=======
+// src/hooks/useUsuarios.js - APENAS JAVASCRIPT, SEM JSX!
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
 import { useState, useEffect } from "react";
 import { 
   collection, doc, setDoc, updateDoc, getDocs, 
@@ -50,9 +54,13 @@ export const useUsuarios = () => {
         perfil: dadosUsuario.perfil,
         criadoPor: auth.currentUser.uid,
         criadoEm: serverTimestamp(),
+<<<<<<< HEAD
         ativo: true, // 🔥 NOVO: Já cria como ativo
         desativadoEm: null, // 🔥 NOVO
         motivoDesativacao: null // 🔥 NOVO
+=======
+        ativo: true
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
       });
 
       return {
@@ -75,14 +83,19 @@ export const useUsuarios = () => {
     }
   };
 
+<<<<<<< HEAD
   // 🔥 CORRIGIDA: Função para ativar/desativar usuário
   const atualizarUsuario = async (usuarioId, dados) => {
     setLoading(true);
+=======
+  const atualizarUsuario = async (usuarioId, dados) => {
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
     try {
       if (perfil !== "gerente") {
         throw new Error("Apenas gerentes podem atualizar usuários");
       }
 
+<<<<<<< HEAD
       // 🔥 Verificar se não está tentando desativar a si mesmo
       if (usuarioId === auth.currentUser?.uid && dados.ativo === false) {
         throw new Error("Você não pode desativar sua própria conta");
@@ -128,11 +141,26 @@ export const useUsuarios = () => {
     return await atualizarUsuario(usuarioId, { ativo: !ativoAtual });
   };
 
+=======
+      await updateDoc(doc(db, "usuarios", usuarioId), {
+        ...dados,
+        atualizadoEm: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar usuário:", error);
+      throw error;
+    }
+  };
+
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
   return { 
     usuarios, 
     criarUsuario, 
     atualizarUsuario,
+<<<<<<< HEAD
     toggleAtivoUsuario, // 🔥 NOVA função
+=======
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
     loading 
   };
 };

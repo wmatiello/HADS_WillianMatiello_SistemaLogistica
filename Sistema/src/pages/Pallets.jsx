@@ -5,6 +5,7 @@ import { usePedidos } from "../hooks/usePedidos";
 import { useUser } from "../context/UserContext";
 
 export default function Pallets() {
+<<<<<<< HEAD
   const { pallets, criarPallet, editarPallet, deletarPallet, loading } = usePallets();
   const { pedidos } = usePedidos();
   const { perfil } = useUser();
@@ -44,16 +45,40 @@ export default function Pallets() {
     alert("Pallet atualizado!");
   };
 
+=======
+  const { pallets, criarPallet, deletarPallet, loading } = usePallets();
+  const { pedidos } = usePedidos();
+  const { perfil } = useUser();
+  
+  const [form, setForm] = useState({
+    pedidoId: "", 
+    codigo: "", 
+    quantidade: "", 
+    peso: "", 
+    tipoEmbalagem: "caixa"
+  });
+  const [mostrarForm, setMostrarForm] = useState(false);
+
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await criarPallet(form);
+<<<<<<< HEAD
       setForm({
         pedidoId: "",
         codigo: "",
         quantidade: "",
         peso: "",
         tipoEmbalagem: "caixa",
+=======
+      setForm({ 
+        pedidoId: "", 
+        codigo: "", 
+        quantidade: "", 
+        peso: "", 
+        tipoEmbalagem: "caixa" 
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
       });
       setMostrarForm(false);
       alert("Pallet registrado com sucesso!");
@@ -81,15 +106,26 @@ export default function Pallets() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <select
               value={form.pedidoId}
+<<<<<<< HEAD
               onChange={(e) => setForm({ ...form, pedidoId: e.target.value })}
+=======
+              onChange={(e) => setForm({...form, pedidoId: e.target.value})}
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
               className="border rounded px-3 py-2"
               required
             >
               <option value="">Selecione um pedido</option>
+<<<<<<< HEAD
               {pedidos.map((pedido) => (
                 <option key={pedido.id} value={pedido.id}>
                   {pedido.cliente} - {pedido.produto} (
                   {pedido.totalProduzido || 0}/{pedido.quantidade} {pedido.unidade})
+=======
+              {pedidos.map(pedido => (
+                <option key={pedido.id} value={pedido.id}>
+                  {pedido.cliente} - {pedido.produto} 
+                  ({pedido.totalProduzido || 0}/{pedido.quantidade} {pedido.unidade})
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
                 </option>
               ))}
             </select>
@@ -98,7 +134,11 @@ export default function Pallets() {
               type="text"
               placeholder="Código do Pallet"
               value={form.codigo}
+<<<<<<< HEAD
               onChange={(e) => setForm({ ...form, codigo: e.target.value })}
+=======
+              onChange={(e) => setForm({...form, codigo: e.target.value})}
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
               className="border rounded px-3 py-2"
               required
             />
@@ -107,7 +147,11 @@ export default function Pallets() {
               type="number"
               placeholder="Quantidade Real"
               value={form.quantidade}
+<<<<<<< HEAD
               onChange={(e) => setForm({ ...form, quantidade: e.target.value })}
+=======
+              onChange={(e) => setForm({...form, quantidade: e.target.value})}
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
               className="border rounded px-3 py-2"
               required
             />
@@ -117,14 +161,22 @@ export default function Pallets() {
               step="0.01"
               placeholder="Peso (kg)"
               value={form.peso}
+<<<<<<< HEAD
               onChange={(e) => setForm({ ...form, peso: e.target.value })}
+=======
+              onChange={(e) => setForm({...form, peso: e.target.value})}
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
               className="border rounded px-3 py-2"
               required
             />
 
             <select
               value={form.tipoEmbalagem}
+<<<<<<< HEAD
               onChange={(e) => setForm({ ...form, tipoEmbalagem: e.target.value })}
+=======
+              onChange={(e) => setForm({...form, tipoEmbalagem: e.target.value})}
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
               className="border rounded px-3 py-2"
             >
               <option value="caixa">Caixa</option>
@@ -133,9 +185,15 @@ export default function Pallets() {
               <option value="pallet">Pallet</option>
             </select>
           </div>
+<<<<<<< HEAD
 
           <button
             type="submit"
+=======
+          
+          <button 
+            type="submit" 
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
             disabled={loading}
             className="bg-blue-600 text-white px-6 py-2 rounded mt-4 hover:bg-blue-700"
           >
@@ -144,7 +202,11 @@ export default function Pallets() {
         </form>
       )}
 
+<<<<<<< HEAD
       {/* Lista de pallets */}
+=======
+      {/* Lista de Pallets */}
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
       <div className="bg-white rounded-lg shadow">
         <h3 className="text-lg font-semibold p-4 border-b">Pallets Registrados</h3>
         <div className="p-4">
@@ -152,9 +214,14 @@ export default function Pallets() {
             <p className="text-gray-500">Nenhum pallet registrado</p>
           ) : (
             <div className="space-y-4">
+<<<<<<< HEAD
               {pallets.map((pallet) => {
                 const pedido = pedidos.find((p) => p.id === pallet.pedidoId);
 
+=======
+              {pallets.map(pallet => {
+                const pedido = pedidos.find(p => p.id === pallet.pedidoId);
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
                 return (
                   <div key={pallet.id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start">
@@ -163,13 +230,17 @@ export default function Pallets() {
                         <p className="text-sm text-gray-600">
                           Pedido: {pedido?.cliente} - {pedido?.produto}
                         </p>
+<<<<<<< HEAD
 
+=======
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
                         <div className="grid grid-cols-2 gap-4 mt-2">
                           <div>
                             <p className="text-sm">Quantidade: {pallet.quantidade}</p>
                             <p className="text-sm">Peso: {pallet.peso} kg</p>
                             <p className="text-sm">Tipo: {pallet.tipoEmbalagem}</p>
                           </div>
+<<<<<<< HEAD
 
                           {pedido && (
                             <div>
@@ -203,6 +274,27 @@ export default function Pallets() {
                           Excluir
                         </button>
                       </div>
+=======
+                          <div>
+                            {pedido && (
+                              <p className="text-sm text-gray-600">
+                                Progresso: {pedido.totalProduzido || 0}/{pedido.quantidade} {pedido.unidade}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (window.confirm("Tem certeza que deseja excluir este pallet?")) {
+                            deletarPallet(pallet.id);
+                          }
+                        }}
+                        className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 ml-4"
+                      >
+                        Excluir
+                      </button>
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
                     </div>
                   </div>
                 );
@@ -211,6 +303,7 @@ export default function Pallets() {
           )}
         </div>
       </div>
+<<<<<<< HEAD
 
       {/* Modal de edição */}
       {editando && (
@@ -276,3 +369,8 @@ export default function Pallets() {
     </div>
   );
 }
+=======
+    </div>
+  );
+}
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212

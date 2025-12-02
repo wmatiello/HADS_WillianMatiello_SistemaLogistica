@@ -1,8 +1,15 @@
 // src/hooks/usePedidos.js
 import { useState, useEffect } from "react";
+<<<<<<< HEAD
 import {
   collection, doc, addDoc, deleteDoc, updateDoc,
   onSnapshot, query, orderBy, serverTimestamp, where
+=======
+import { 
+  collection, doc, addDoc, deleteDoc,
+  onSnapshot, query, orderBy, serverTimestamp,
+  getDocs, getDoc, where, updateDoc
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
 
@@ -11,6 +18,7 @@ export const usePedidos = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+<<<<<<< HEAD
     // 🔥 LISTENER REALTIME EM "pedidos"
     const pedidosQuery = query(
       collection(db, "pedidos"),
@@ -61,12 +69,53 @@ export const usePedidos = () => {
       await addDoc(collection(db, "pedidos"), {
         ...dados,
         quantidade: Number(dados.quantidade),
+=======
+    const q = query(collection(db, "pedidos"), orderBy("criadoEm", "desc"));
+
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const pedidosData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // 🔥 Buscar pallets relacionados para cada pedido
+      const pedidosComPallets = await Promise.all(
+        pedidosData.map(async pedido => {
+          const palletsQuery = query(
+            collection(db, "pallets"),
+            where("pedidoId", "==", pedido.id)
+          );
+
+          const palletsSnap = await getDocs(palletsQuery);
+          const pallets = palletsSnap.docs.map(d => ({
+            id: d.id,
+            ...d.data()
+          }));
+
+          return { ...pedido, pallets };
+        })
+      );
+
+      setPedidos(pedidosComPallets);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const criarPedido = async (dados) => {
+    setLoading(true);
+    try {
+      const novoPedido = {
+        ...dados,
+        quantidade: parseInt(dados.quantidade),
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
         criadoPor: auth.currentUser?.uid ?? "sistema",
         status: "pendente",
         criadoEm: serverTimestamp(),
         atualizadoEm: serverTimestamp(),
         totalProduzido: 0,
         totalPeso: 0,
+<<<<<<< HEAD
         divergencia: 0,
       });
     } finally {
@@ -121,11 +170,18 @@ export const usePedidos = () => {
     } catch (error) {
       console.error("❌ Erro ao atualizar status do pedido:", error);
       throw new Error("Erro ao atualizar status do pedido: " + error.message);
+=======
+        divergencia: 0
+      };
+
+      await addDoc(collection(db, "pedidos"), novoPedido);
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
     } finally {
       setLoading(false);
     }
   };
 
+<<<<<<< HEAD
   // Editar pedido
   const editarPedido = async (id, novosDados) => {
     setLoading(true);
@@ -154,11 +210,16 @@ export const usePedidos = () => {
     } finally {
       setLoading(false);
     }
+=======
+  const deletarPedido = async (id) => {
+    await deleteDoc(doc(db, "pedidos", id));
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
   };
 
   return {
     pedidos,
     criarPedido,
+<<<<<<< HEAD
     editarPedido,
     deletarPedido,
     finalizarPedido, // ✅ NOVA FUNÇÃO
@@ -166,3 +227,9 @@ export const usePedidos = () => {
     loading,
   };
 };
+=======
+    deletarPedido,
+    loading
+  };
+};
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212

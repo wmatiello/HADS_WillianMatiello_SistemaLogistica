@@ -18,7 +18,11 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, senha);
+<<<<<<< HEAD
       navigate("/");
+=======
+      navigate("/"); // redireciona após login
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
     } catch (error) {
       console.error(error);
       setErro("E-mail ou senha incorretos.");

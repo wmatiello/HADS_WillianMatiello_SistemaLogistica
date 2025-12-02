@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // src/context/UserContext.jsx
+=======
+// src/context/Usercontext.jsx
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
 import { createContext, useContext, useState, useEffect } from "react";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -25,6 +29,7 @@ export function UserProvider({ children }) {
       try {
         const ref = doc(db, "usuarios", firebaseUser.uid);
         const snap = await getDoc(ref);
+<<<<<<< HEAD
         
         if (snap.exists()) {
           const dados = snap.data();
@@ -38,6 +43,29 @@ export function UserProvider({ children }) {
         }
       } catch (error) {
         console.error("❌ Erro ao buscar perfil:", error);
+=======
+
+        try {
+          const ref = doc(db, "usuarios", firebaseUser.uid);
+          const snap = await getDoc(ref);
+        
+          if (snap.exists()) {
+            const dados = snap.data();
+            console.log("📄 Dados do Firestore:", dados);
+            setPerfil(dados.perfil ?? null);
+          } else {
+            console.warn("⚠️ Nenhum documento encontrado no Firestore para este usuário:", firebaseUser.uid);
+            setPerfil(null);
+          }
+        } catch (error) {
+          console.error("❌ Erro ao buscar perfil:", error);
+          setPerfil(null);
+        }
+        
+
+        setPerfil(snap.exists() ? snap.data().perfil ?? null : null);
+      } catch {
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
         setPerfil(null);
       }
 
@@ -56,4 +84,8 @@ export function UserProvider({ children }) {
 
 export function useUser() {
   return useContext(UserContext);
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212

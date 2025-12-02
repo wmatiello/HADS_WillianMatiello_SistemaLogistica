@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // src/hooks/usePallets.js - VERSÃO CORRIGIDA
 import { useState, useEffect } from "react";
 import {
@@ -13,6 +14,14 @@ import {
   getDoc,
   getDocs,
   where,
+=======
+// src/hooks/usePallets.js
+import { useState, useEffect } from "react";
+import { 
+  collection, addDoc, updateDoc, deleteDoc, doc, 
+  onSnapshot, query, orderBy, serverTimestamp,
+  getDoc, getDocs, where
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
 
@@ -23,11 +32,19 @@ export const usePallets = () => {
   // 🔥 Carregar pallets em tempo real
   useEffect(() => {
     const q = query(collection(db, "pallets"), orderBy("criadoEm", "desc"));
+<<<<<<< HEAD
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const palletsData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
+=======
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const palletsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
       }));
       setPallets(palletsData);
     });
@@ -35,12 +52,19 @@ export const usePallets = () => {
     return unsubscribe;
   }, []);
 
+<<<<<<< HEAD
   // 🔥 Criar pallet - VERSÃO OTIMIZADA
   const criarPallet = async (dadosPallet) => {
     setLoading(true);
     try {
       console.log("🚀 Iniciando criação de pallet...");
       
+=======
+  // 🔥 Criar pallet
+  const criarPallet = async (dadosPallet) => {
+    setLoading(true);
+    try {
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
       const pedidoRef = doc(db, "pedidos", dadosPallet.pedidoId);
       const pedidoSnap = await getDoc(pedidoRef);
 
@@ -49,6 +73,7 @@ export const usePallets = () => {
       }
 
       const pedido = pedidoSnap.data();
+<<<<<<< HEAD
       
       console.log("📊 Pedido encontrado:", {
         id: dadosPallet.pedidoId,
@@ -89,24 +114,57 @@ export const usePallets = () => {
       return docRef.id;
     } catch (error) {
       console.error("❌ Erro ao criar pallet:", error);
+=======
+
+      // Calcular divergência (quantidade real vs quantidade planejada)
+      const divergencia =
+        parseInt(dadosPallet.quantidade) - parseInt(pedido.quantidade || 0);
+
+      const novoPallet = {
+        ...dadosPallet,
+        quantidade: parseInt(dadosPallet.quantidade),
+        peso: parseFloat(dadosPallet.peso),
+        divergencia,
+        status: "registrado",
+        criadoPor: auth.currentUser?.uid ?? "sistema",
+        criadoEm: serverTimestamp(),
+        atualizadoEm: serverTimestamp()
+      };
+
+      const docRef = await addDoc(collection(db, "pallets"), novoPallet);
+
+      // Atualizar total produzido do pedido
+      await atualizarTotalProduzidoPedido(dadosPallet.pedidoId);
+
+      return docRef.id;
+    } catch (error) {
+      console.error("Erro ao criar pallet:", error);
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
+<<<<<<< HEAD
   // 🔥 Calcular TOTAIS do pedido - VERSÃO COMPLETA
   const atualizarTotaisPedido = async (pedidoId) => {
     try {
       console.log("🔄 Calculando totais para pedido:", pedidoId);
       
       // Buscar todos os pallets do pedido
+=======
+  // 🔥 Calcular total produzido do pedido
+  const atualizarTotalProduzidoPedido = async (pedidoId) => {
+    try {
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
       const palletsQuery = query(
         collection(db, "pallets"),
         where("pedidoId", "==", pedidoId)
       );
 
       const palletsSnap = await getDocs(palletsQuery);
+<<<<<<< HEAD
       const pedidoRef = doc(db, "pedidos", pedidoId);
       const pedidoSnap = await getDoc(pedidoRef);
       
@@ -244,11 +302,28 @@ export const usePallets = () => {
       throw error;
     } finally {
       setLoading(false);
+=======
+
+      // Somar quantidades
+      const totalProduzido = palletsSnap.docs.reduce((total, doc) => {
+        return total + parseInt(doc.data().quantidade);
+      }, 0);
+
+      await updateDoc(doc(db, "pedidos", pedidoId), {
+        totalProduzido,
+        atualizadoEm: serverTimestamp()
+      });
+
+      console.log("🔄 Total produzido atualizado:", totalProduzido);
+    } catch (error) {
+      console.error("Erro ao atualizar total produzido:", error);
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
     }
   };
 
   // 🔥 Excluir pallet
   const deletarPallet = async (palletId) => {
+<<<<<<< HEAD
     setLoading(true);
     try {
       console.log("🗑️  Deletando pallet:", palletId);
@@ -289,3 +364,32 @@ export const usePallets = () => {
     loading,
   };
 };
+=======
+    try {
+      const palletDoc = await getDoc(doc(db, "pallets", palletId));
+
+      if (!palletDoc.exists()) return;
+
+      const pallet = palletDoc.data();
+      const pedidoId = pallet.pedidoId;
+
+      await deleteDoc(doc(db, "pallets", palletId));
+
+      // Atualizar total produzido do pedido
+      if (pedidoId) {
+        await atualizarTotalProduzidoPedido(pedidoId);
+      }
+    } catch (error) {
+      console.error("Erro ao deletar pallet:", error);
+      throw error;
+    }
+  };
+
+  return { 
+    pallets, 
+    criarPallet, 
+    deletarPallet, 
+    loading 
+  };
+};
+>>>>>>> ed01cd36b54e742dfad1471c227a452587b61212
